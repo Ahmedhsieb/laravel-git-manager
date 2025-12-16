@@ -586,4 +586,5 @@ class GitManager
             'email' => trim($email['output'])
         ];
     }
+    
 }
