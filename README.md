@@ -6,7 +6,7 @@
 
 A complete, production-ready Git management interface for Laravel applications. Manage your repository through a beautiful web interface without ever touching the terminal.
 
-![Git Manager Screenshot](https://via.placeholder.com/800x400?text=Git+Manager+Screenshot)
+![Git Manager Screenshot](image.png)
 
 ## ✨ Features
 
