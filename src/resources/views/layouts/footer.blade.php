@@ -24,7 +24,7 @@
         const remaining = expiresAt - now;
 
         if (remaining <= 0) {
-            window.location.reload();
+            window.location.href = '/git-manager/logout';
             return;
         }
 
