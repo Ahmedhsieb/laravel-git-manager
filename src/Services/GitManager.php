@@ -21,7 +21,7 @@ class GitManager
         $this->username = config('git-manager.username');
         $this->token = config('git-manager.token');
         $this->gitBinary = $this->resolveGitBinary();
-        
+
         // Auto-configure git user if not set
         $this->ensureGitUserConfigured();
     }
@@ -95,14 +95,14 @@ class GitManager
     protected function ensureGitUserConfigured()
     {
         $emailResult = $this->execute(['config', 'user.email']);
-        
+
         if (!$emailResult['success'] || empty(trim($emailResult['output']))) {
             $email = config('git-manager.user_email', 'git@localhost');
             $this->execute(['config', '--local', 'user.email', $email]);
         }
-        
+
         $nameResult = $this->execute(['config', 'user.name']);
-        
+
         if (!$nameResult['success'] || empty(trim($nameResult['output']))) {
             $name = config('git-manager.user_name', config('app.name', 'Git Manager'));
             $this->execute(['config', '--local', 'user.name', $name]);
@@ -131,20 +131,20 @@ class GitManager
 
         // Set environment variables for authentication
         $env = [];
-        
+
         // Disable interactive prompts
         $env['GIT_TERMINAL_PROMPT'] = '0';
         $env['GIT_ASKPASS'] = 'echo';
-        
+
         if ($withAuth && $this->username && $this->token) {
             // Pass credentials via environment
             $env['GIT_USERNAME'] = $this->username;
             $env['GIT_PASSWORD'] = $this->token;
         }
-        
+
         // Disable SSH prompts
         $env['GIT_SSH_COMMAND'] = 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null';
-        
+
         $process->setEnv($env);
 
         try {
@@ -183,7 +183,7 @@ class GitManager
     {
         $commandString = preg_replace('/^git\s+/', '', trim($commandString));
         $command = $this->parseCommand($commandString);
-        
+
         $dangerousCommands = ['rm', 'clean -fd', 'reset --hard HEAD~'];
         foreach ($dangerousCommands as $dangerous) {
             if (stripos($commandString, $dangerous) !== false) {
@@ -196,7 +196,7 @@ class GitManager
                 ];
             }
         }
-        
+
         return $this->execute($command, true);
     }
 
@@ -206,7 +206,7 @@ class GitManager
     protected function parseCommand($commandString)
     {
         preg_match_all('/"(?:\\\\.|[^\\\\"])*"|\S+/', $commandString, $matches);
-        return array_map(function($arg) {
+        return array_map(function ($arg) {
             return trim($arg, '"');
         }, $matches[0]);
     }
@@ -260,7 +260,7 @@ class GitManager
         } else {
             $command = ['add', $files];
         }
-        
+
         return $this->execute($command);
     }
 
@@ -285,23 +285,23 @@ class GitManager
             $authUrl = $this->addAuthToUrl($originalUrl);
             $this->execute(['remote', 'set-url', $remote, $authUrl]);
         }
-        
+
         $command = ['push'];
-        
+
         if ($force) {
             $command[] = '--force';
         }
-        
+
         $command[] = $remote;
         $command[] = $branch;
 
         $result = $this->execute($command, true);
-        
+
         // Reset remote URL to remove credentials
         if ($this->username && $this->token && $originalUrl) {
             $this->execute(['remote', 'set-url', $remote, $originalUrl]);
         }
-        
+
         return $result;
     }
 
@@ -321,16 +321,16 @@ class GitManager
             $authUrl = $this->addAuthToUrl($originalUrl);
             $this->execute(['remote', 'set-url', $remote, $authUrl]);
         }
-        
+
         $command = ['pull', $remote, $branch];
 
         $result = $this->execute($command, true);
-        
+
         // Reset remote URL
         if ($this->username && $this->token && $originalUrl) {
             $this->execute(['remote', 'set-url', $remote, $originalUrl]);
         }
-        
+
         return $result;
     }
 
@@ -345,39 +345,39 @@ class GitManager
             $authUrl = $this->addAuthToUrl($originalUrl);
             $this->execute(['remote', 'set-url', $remote, $authUrl]);
         }
-        
+
         $result = $this->execute(['fetch', $remote], true);
-        
+
         // Reset remote URL
         if ($this->username && $this->token && $originalUrl) {
             $this->execute(['remote', 'set-url', $remote, $originalUrl]);
         }
-        
+
         return $result;
     }
 
     public function checkout($branch, $create = false)
     {
         $command = ['checkout'];
-        
+
         if ($create) {
             $command[] = '-b';
         }
-        
+
         $command[] = $branch;
-        
+
         return $this->execute($command);
     }
 
     public function merge($branch, $message = null)
     {
         $command = ['merge', $branch];
-        
+
         if ($message) {
             $command[] = '-m';
             $command[] = $message;
         }
-        
+
         return $this->execute($command);
     }
 
@@ -386,7 +386,7 @@ class GitManager
         if ($checkout) {
             return $this->checkout($branchName, true);
         }
-        
+
         return $this->execute(['branch', $branchName]);
     }
 
@@ -404,24 +404,24 @@ class GitManager
     public function diff($file = null)
     {
         $command = ['diff'];
-        
+
         if ($file) {
             $command[] = $file;
         }
-        
+
         return $this->execute($command);
     }
 
     public function stash($message = null)
     {
         $command = ['stash'];
-        
+
         if ($message) {
             $command[] = 'push';
             $command[] = '-m';
             $command[] = $message;
         }
-        
+
         return $this->execute($command);
     }
 
@@ -443,26 +443,26 @@ class GitManager
     public function clone($repoUrl, $destination = null)
     {
         $urlWithAuth = $this->addAuthToUrl($repoUrl);
-        
+
         $command = ['clone', $urlWithAuth];
-        
+
         if ($destination) {
             $command[] = $destination;
         }
-        
+
         return $this->execute($command, true);
     }
 
     protected function getRemoteUrlWithAuth($remote = 'origin')
     {
         $result = $this->execute(['remote', 'get-url', $remote]);
-        
+
         if (!$result['success']) {
             return $remote;
         }
-        
+
         $url = trim($result['output']);
-        
+
         return $this->addAuthToUrl($url);
     }
 
@@ -479,14 +479,14 @@ class GitManager
         if (preg_match('/^(https?:\/\/)(.+)$/', $url, $matches)) {
             $protocol = $matches[1];
             $rest = $matches[2];
-            
+
             // URL encode credentials to handle special characters
             $encodedUsername = urlencode($this->username);
             $encodedToken = urlencode($this->token);
-            
+
             return $protocol . $encodedUsername . ':' . $encodedToken . '@' . $rest;
         }
-        
+
         return $url;
     }
 
@@ -495,7 +495,7 @@ class GitManager
         $status = $this->status();
         $branch = $this->currentBranch();
         $remotes = $this->execute(['remote', '-v']);
-        
+
         return [
             'status' => $status,
             'current_branch' => $branch,
@@ -517,7 +517,7 @@ class GitManager
     public function createTag($tagName, $message = null)
     {
         $command = ['tag'];
-        
+
         if ($message) {
             $command[] = '-a';
             $command[] = $tagName;
@@ -526,7 +526,7 @@ class GitManager
         } else {
             $command[] = $tagName;
         }
-        
+
         return $this->execute($command);
     }
 
@@ -551,24 +551,24 @@ class GitManager
             $authUrl = $this->addAuthToUrl($originalUrl);
             $this->execute(['remote', 'set-url', $remote, $authUrl]);
         }
-        
+
         $result = $this->execute(['push', $remote, '--tags'], true);
-        
+
         // Reset remote URL
         if ($this->username && $this->token && $originalUrl) {
             $this->execute(['remote', 'set-url', $remote, $originalUrl]);
         }
-        
+
         return $result;
     }
 
     public function configUser($name, $email, $global = false)
     {
         $scope = $global ? '--global' : '--local';
-        
+
         $nameResult = $this->execute(['config', $scope, 'user.name', $name]);
         $emailResult = $this->execute(['config', $scope, 'user.email', $email]);
-        
+
         return [
             'success' => $nameResult['success'] && $emailResult['success'],
             'name_result' => $nameResult,
@@ -580,7 +580,7 @@ class GitManager
     {
         $name = $this->execute(['config', 'user.name']);
         $email = $this->execute(['config', 'user.email']);
-        
+
         return [
             'name' => trim($name['output']),
             'email' => trim($email['output'])
